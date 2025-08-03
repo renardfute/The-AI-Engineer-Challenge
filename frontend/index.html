@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chat Interface</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            dark: '#1a1a2e',
+                            electric: '#16213e',
+                            accent: '#0f3460',
+                        },
+                        background: {
+                            DEFAULT: '#1a1a2e',
+                            secondary: '#16213e',
+                        },
+                        text: {
+                            primary: '#ffffff',
+                            secondary: '#a0a0a0',
+                        },
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-in-out',
+                        'slide-up': 'slideUp 0.3s ease-out',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(10px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        },
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            font-family: 'Inter', system-ui, sans-serif;
+        }
+        
+        .message-bubble {
+            @apply rounded-2xl px-4 py-3 max-w-[80%];
+        }
+        
+        .user-message {
+            @apply bg-primary-accent text-white ml-auto;
+        }
+        
+        .ai-message {
+            @apply bg-background-secondary text-text-primary;
+        }
+        
+        .input-field {
+            @apply bg-background-secondary border border-gray-600 rounded-xl px-4 py-3 text-text-primary placeholder-text-secondary focus:outline-none focus:ring-2 focus:ring-primary-accent focus:border-transparent transition-all duration-200;
+        }
+        
+        .btn-primary {
+            @apply bg-primary-accent hover:bg-opacity-90 text-white font-medium px-6 py-3 rounded-xl transition-all duration-200 transform hover:scale-105 active:scale-95;
+        }
+        
+        .btn-secondary {
+            @apply bg-background-secondary hover:bg-opacity-80 text-text-primary font-medium px-6 py-3 rounded-xl transition-all duration-200 border border-gray-600;
+        }
+        
+        .typing-indicator {
+            @apply flex space-x-1;
+        }
+        
+        .typing-dot {
+            @apply w-2 h-2 bg-primary-accent rounded-full animate-pulse-slow;
+        }
+        
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <div id="app" class="flex flex-col h-screen max-w-4xl mx-auto">
+        <!-- Header -->
+        <div class="flex items-center justify-between p-4 border-b border-gray-700">
+            <div>
+                <h1 class="text-2xl font-bold text-text-primary">AI Chat Interface</h1>
+                <p class="text-text-secondary text-sm">Powered by OpenAI</p>
+            </div>
+            
+            <div class="flex items-center gap-2">
+                <button id="settings-btn" class="btn-secondary flex items-center gap-2">
+                    ⚙️ Settings
+                </button>
+            </div>
+        </div>
+
+        <!-- Messages Container -->
+        <div id="messages" class="flex-1 overflow-y-auto p-4 space-y-4">
+            <div class="text-center py-12">
+                <div class="text-text-secondary mb-4">
+                    <div class="text-4xl mb-4 opacity-50">🤖</div>
+                    <h3 class="text-xl font-semibold text-text-primary mb-2">
+                        Welcome to AI Chat
+                    </h3>
+                    <p class="text-text-secondary">
+                        Configure your API key in settings and start chatting!
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Container -->
+        <div class="p-4 border-t border-gray-700">
+            <form id="chat-form" class="flex gap-3 items-end">
+                <div class="flex-1">
+                    <textarea
+                        id="message-input"
+                        placeholder="Type your message here..."
+                        class="input-field w-full resize-none min-h-[44px] max-h-32"
+                        rows="1"
+                    ></textarea>
+                </div>
+                
+                <button
+                    type="submit"
+                    id="send-btn"
+                    class="btn-primary flex items-center gap-2"
+                >
+                    📤 Send
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-background-secondary border border-gray-600 rounded-xl p-6 w-96 max-w-[90vw]">
+            <h3 class="text-lg font-semibold mb-4 text-text-primary">Configuration</h3>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-text-secondary mb-2">
+                        OpenAI API Key
+                    </label>
+                    <input
+                        type="password"
+                        id="api-key"
+                        placeholder="sk-..."
+                        class="input-field w-full"
+                    />
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-text-secondary mb-2">
+                        Model
+                    </label>
+                    <select id="model" class="input-field w-full">
+                        <option value="gpt-4.1-mini">GPT-4.1 Mini</option>
+                        <option value="gpt-4">GPT-4</option>
+                        <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-text-secondary mb-2">
+                        System Message
+                    </label>
+                    <textarea
+                        id="developer-message"
+                        placeholder="Enter the system message for the AI..."
+                        class="input-field w-full resize-none"
+                        rows="3"
+                    >You are a helpful AI assistant. Provide clear, concise, and accurate responses.</textarea>
+                </div>
+            </div>
+
+            <button
+                id="save-settings"
+                class="btn-primary w-full mt-4"
+            >
+                💾 Save Settings
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Simple chat functionality
+        const messagesContainer = document.getElementById('messages');
+        const messageInput = document.getElementById('message-input');
+        const sendBtn = document.getElementById('send-btn');
+        const chatForm = document.getElementById('chat-form');
+        const settingsBtn = document.getElementById('settings-btn');
+        const settingsModal = document.getElementById('settings-modal');
+        const saveSettingsBtn = document.getElementById('save-settings');
+        const apiKeyInput = document.getElementById('api-key');
+        const modelSelect = document.getElementById('model');
+        const developerMessageInput = document.getElementById('developer-message');
+
+        let settings = {
+            apiKey: '',
+            model: 'gpt-4.1-mini',
+            developerMessage: 'You are a helpful AI assistant. Provide clear, concise, and accurate responses.'
+        };
+
+        // Load settings from localStorage
+        const savedSettings = localStorage.getItem('chat-settings');
+        if (savedSettings) {
+            settings = { ...settings, ...JSON.parse(savedSettings) };
+            apiKeyInput.value = settings.apiKey;
+            modelSelect.value = settings.model;
+            developerMessageInput.value = settings.developerMessage;
+        }
+
+        function addMessage(content, isUser = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`;
+            
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            messageDiv.innerHTML = `
+                <div class="flex items-start gap-3 max-w-[80%] ${isUser ? 'flex-row-reverse' : 'flex-row'}">
+                    <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                        isUser ? 'bg-primary-accent text-white' : 'bg-background-secondary text-text-primary border border-gray-600'
+                    }">
+                        ${isUser ? '👤' : '🤖'}
+                    </div>
+                    <div class="message-bubble ${isUser ? 'user-message' : 'ai-message'}">
+                        <div class="whitespace-pre-wrap break-words">${content}</div>
+                        <div class="text-xs mt-2 opacity-60 ${isUser ? 'text-right' : 'text-left'}">${time}</div>
+                    </div>
+                </div>
+            `;
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function addTypingIndicator() {
+            const typingDiv = document.createElement('div');
+            typingDiv.id = 'typing-indicator';
+            typingDiv.className = 'flex justify-start mb-4';
+            typingDiv.innerHTML = `
+                <div class="flex items-start gap-3 max-w-[80%]">
+                    <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-background-secondary text-text-primary border border-gray-600">
+                        🤖
+                    </div>
+                    <div class="message-bubble ai-message">
+                        <div class="typing-indicator">
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            messagesContainer.appendChild(typingDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function removeTypingIndicator() {
+            const typingIndicator = document.getElementById('typing-indicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+        }
+
+        async function sendMessage(message) {
+            if (!settings.apiKey) {
+                alert('Please configure your OpenAI API key in settings.');
+                return;
+            }
+
+            addMessage(message, true);
+            addTypingIndicator();
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        developer_message: settings.developerMessage,
+                        user_message: message,
+                        model: settings.model,
+                        api_key: settings.apiKey,
+                    }),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let aiResponse = '';
+
+                removeTypingIndicator();
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    const chunk = decoder.decode(value, { stream: true });
+                    aiResponse += chunk;
+                    
+                    // Update the AI message in real-time
+                    const aiMessageDiv = document.createElement('div');
+                    aiMessageDiv.className = 'flex justify-start mb-4';
+                    aiMessageDiv.innerHTML = `
+                        <div class="flex items-start gap-3 max-w-[80%]">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-background-secondary text-text-primary border border-gray-600">
+                                🤖
+                            </div>
+                            <div class="message-bubble ai-message">
+                                <div class="whitespace-pre-wrap break-words">${aiResponse}</div>
+                                <div class="text-xs mt-2 opacity-60 text-left">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Replace or add the AI message
+                    const existingAiMessage = messagesContainer.querySelector('.flex:last-child');
+                    if (existingAiMessage && !existingAiMessage.querySelector('.user-message')) {
+                        existingAiMessage.remove();
+                    }
+                    messagesContainer.appendChild(aiMessageDiv);
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                }
+            } catch (error) {
+                removeTypingIndicator();
+                console.error('Error:', error);
+                addMessage('Sorry, there was an error processing your request. Please check your API key and try again.', false);
+            }
+        }
+
+        // Event listeners
+        chatForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const message = messageInput.value.trim();
+            if (message) {
+                sendMessage(message);
+                messageInput.value = '';
+            }
+        });
+
+        settingsBtn.addEventListener('click', () => {
+            settingsModal.classList.remove('hidden');
+        });
+
+        saveSettingsBtn.addEventListener('click', () => {
+            settings.apiKey = apiKeyInput.value;
+            settings.model = modelSelect.value;
+            settings.developerMessage = developerMessageInput.value;
+            
+            localStorage.setItem('chat-settings', JSON.stringify(settings));
+            settingsModal.classList.add('hidden');
+        });
+
+        // Close modal when clicking outside
+        settingsModal.addEventListener('click', (e) => {
+            if (e.target === settingsModal) {
+                settingsModal.classList.add('hidden');
+            }
+        });
+
+        // Auto-resize textarea
+        messageInput.addEventListener('input', () => {
+            messageInput.style.height = 'auto';
+            messageInput.style.height = messageInput.scrollHeight + 'px';
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  
+  body {
+    @apply bg-background text-text-primary;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    min-height: 100vh;
+  }
+}
+
+@layer components {
+  .chat-message {
+    @apply animate-fade-in;
+  }
+  
+  .message-bubble {
+    @apply rounded-2xl px-4 py-3 max-w-[80%] animate-slide-up;
+  }
+  
+  .user-message {
+    @apply bg-primary-accent text-white ml-auto;
+  }
+  
+  .ai-message {
+    @apply bg-background-secondary text-text-primary;
+  }
+  
+  .input-field {
+    @apply bg-background-secondary border border-gray-600 rounded-xl px-4 py-3 text-text-primary placeholder-text-secondary focus:outline-none focus:ring-2 focus:ring-primary-accent focus:border-transparent transition-all duration-200;
+  }
+  
+  .btn-primary {
+    @apply bg-primary-accent hover:bg-opacity-90 text-white font-medium px-6 py-3 rounded-xl transition-all duration-200 transform hover:scale-105 active:scale-95;
+  }
+  
+  .btn-secondary {
+    @apply bg-background-secondary hover:bg-opacity-80 text-text-primary font-medium px-6 py-3 rounded-xl transition-all duration-200 border border-gray-600;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-background-secondary;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-primary-accent rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-opacity-80;
+}
+
+/* Loading animation */
+.typing-indicator {
+  @apply flex space-x-1;
+}
+
+.typing-dot {
+  @apply w-2 h-2 bg-primary-accent rounded-full animate-pulse-slow;
+}
+
+.typing-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-dot:nth-child(3) {
+  animation-delay: 0.4s;
+} 

@@ -9,3 +9,8 @@ alwaysApply: true
 - You must always try and write code that is well documented. (self or commented is fine)
 - You must only work on a single feature at a time.
 - You must explain your decisions thouroughly to the user.
+## Theme Preferences
+- Use a modern dark theme with blue accents
+- Prefer gradient backgrounds
+- Use rounded corners and smooth animations
+- Color scheme: Dark blue (#1a1a2e), Electric blue (#16213e), Bright accent (#0f3460)

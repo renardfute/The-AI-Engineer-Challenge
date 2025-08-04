@@ -94,9 +94,13 @@ async def health_check():
     try:
         # Check if API key is configured
         api_key = get_api_key()
+        # Return masked version for security
+        masked_key = api_key[:7] + "..." + api_key[-4:] if len(api_key) > 11 else "***"
         return {
             "status": "ok", 
             "message": "API is running with OpenAI key configured", 
+            "api_key_status": "configured",
+            "masked_key": masked_key,
             "timestamp": "2024-01-01"
         }
     except HTTPException as e:

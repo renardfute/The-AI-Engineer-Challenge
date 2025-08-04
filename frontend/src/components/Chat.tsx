@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useRef, useEffect } from 'react';
 import { ChatMessage, Message } from './ChatMessage';
 import { TypingIndicator } from './TypingIndicator';

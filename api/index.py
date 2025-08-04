@@ -1,11 +1,10 @@
-from app import app
 import json
 
-# Simple handler for Vercel
+# Minimal handler for Vercel - no imports that might fail
 def handler(request, context):
-    """Simple handler for Vercel serverless functions"""
+    """Minimal handler for Vercel serverless functions"""
     try:
-        # For now, return a simple response to test if the handler works
+        # Return a simple response without any complex imports
         return {
             "statusCode": 200,
             "headers": {
@@ -15,9 +14,9 @@ def handler(request, context):
                 "Access-Control-Allow-Headers": "*"
             },
             "body": json.dumps({
-                "message": "Handler working", 
+                "message": "Minimal handler working", 
                 "status": "ok",
-                "endpoint": "test"
+                "test": True
             })
         }
     except Exception as e:

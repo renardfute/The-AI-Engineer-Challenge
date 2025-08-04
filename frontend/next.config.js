@@ -7,7 +7,7 @@ const nextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: 'http://localhost:8000/api/:path*',
+        destination: 'https://ai-chat-backend-1mz4ltyia-renard-futes-projects.vercel.app/api/:path*',
       },
     ];
   },

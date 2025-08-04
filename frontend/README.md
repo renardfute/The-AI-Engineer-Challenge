@@ -25,7 +25,7 @@ A modern, interactive chat interface built with Next.js and TypeScript that inte
 ### Prerequisites
 
 - Node.js 18+ and npm
-- FastAPI backend running on `http://localhost:8000`
+- FastAPI backend running on `https://ai-chat-backend-1mz4ltyia-renard-futes-projects.vercel.app`
 
 ### Installation
 

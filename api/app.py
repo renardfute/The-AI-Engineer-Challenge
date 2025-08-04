@@ -17,10 +17,17 @@ app = FastAPI(title="OpenAI Chat API")
 # This allows the API to be accessed from different domains/origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows requests from any origin
+    allow_origins=[
+        "*",  # Allow all origins for development
+        "https://the-ai-engineer-challenge-8erdxkibe-renard-futes-projects.vercel.app",
+        "https://the-ai-engineer-challenge-*.vercel.app",  # Allow all Vercel preview URLs
+        "http://localhost:3000",  # Local development
+        "http://localhost:3001",  # Local development
+    ],
     allow_credentials=True,  # Allows cookies to be included in requests
-    allow_methods=["*"],  # Allows all HTTP methods (GET, POST, etc.)
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],  # Explicit methods
     allow_headers=["*"],  # Allows all headers in requests
+    expose_headers=["*"],  # Expose all headers
 )
 
 # Define the data models using Pydantic
@@ -116,6 +123,11 @@ async def health_check():
     except Exception as e:
         print(f"Health check error: {e}")
         return {"status": "error", "message": str(e)}
+
+# CORS preflight endpoint
+@app.options("/api/{path:path}")
+async def options_handler(path: str):
+    return {"message": "CORS preflight handled"}
 
 # Simple test endpoint
 @app.get("/api/test")

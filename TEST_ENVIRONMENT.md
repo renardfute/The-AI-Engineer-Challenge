@@ -27,7 +27,7 @@ cd api
 pip install -r requirements.txt
 
 # Set environment variable (Windows PowerShell)
-$env:OPENAI_API_KEY="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"
+$env:OPENAI_API_KEY="your-api-key-here"
 
 # Start local server
 uvicorn app:app --reload --host 0.0.0.0 --port 8000
@@ -142,7 +142,7 @@ curl -X POST https://ai-chat-backend-3k7m.onrender.com/api/chat \
 # Terminal 1 - Backend
 cd api
 pip install -r requirements.txt
-$env:OPENAI_API_KEY="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"
+$env:OPENAI_API_KEY="your-api-key-here"
 uvicorn app:app --reload --host 0.0.0.0 --port 8000
 
 # Terminal 2 - Frontend

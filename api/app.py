@@ -32,26 +32,33 @@ class ChatRequest(BaseModel):
 class ApiKeyRequest(BaseModel):
     api_key: str  # OpenAI API key for storage
 
-# File path for storing API key
-API_KEY_FILE = "stored_api_key.txt"
+# In-memory storage for API key (for serverless compatibility)
+_stored_api_key = None
 
 # Helper functions for API key storage
 def save_api_key(api_key: str):
-    """Save API key to file"""
+    """Save API key to memory (temporary for serverless)"""
+    global _stored_api_key
     try:
-        with open(API_KEY_FILE, 'w') as f:
-            f.write(api_key)
+        _stored_api_key = api_key
         return True
     except Exception as e:
         print(f"Error saving API key: {e}")
         return False
 
 def get_stored_api_key() -> Optional[str]:
-    """Retrieve stored API key from file"""
+    """Retrieve stored API key from memory"""
+    global _stored_api_key
     try:
-        if os.path.exists(API_KEY_FILE):
-            with open(API_KEY_FILE, 'r') as f:
-                return f.read().strip()
+        # First try memory storage
+        if _stored_api_key:
+            return _stored_api_key
+        
+        # Fallback to environment variable
+        env_key = os.getenv("OPENAI_API_KEY")
+        if env_key:
+            return env_key
+            
         return None
     except Exception as e:
         print(f"Error reading API key: {e}")

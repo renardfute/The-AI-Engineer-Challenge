@@ -1,4 +1,6 @@
 from app import app
+import asyncio
+from mangum import Adapter
 
-# Export the FastAPI app for Vercel
-handler = app 
+# Create a Mangum adapter for AWS Lambda/Vercel
+handler = Adapter(app, lifespan="off") 

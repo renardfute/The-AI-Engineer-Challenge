@@ -112,10 +112,15 @@ async def chat(request: ChatRequest):
 @app.get("/api/health")
 async def health_check():
     try:
-        return {"status": "ok", "message": "API is running"}
+        return {"status": "ok", "message": "API is running", "timestamp": "2024-01-01"}
     except Exception as e:
         print(f"Health check error: {e}")
         return {"status": "error", "message": str(e)}
+
+# Simple test endpoint
+@app.get("/api/test")
+async def test_endpoint():
+    return {"message": "Test endpoint working"}
 
 # Endpoint to save API key
 @app.post("/api/save-key")

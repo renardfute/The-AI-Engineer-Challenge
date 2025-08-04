@@ -29,7 +29,7 @@
 ### **Status**: ✅ **CONFIGURED**
 - **Location**: Render environment variables
 - **Key**: `OPENAI_API_KEY`
-- **Value**: `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`
+- **Value**: `your-api-key-here`
 
 ## 🧪 **Testing Results**
 

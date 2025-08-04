@@ -93,7 +93,7 @@ export OPENAI_API_KEY="your-api-key-here"
 
 ### **Production (Render)**
 - **Key**: `OPENAI_API_KEY`
-- **Value**: `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`
+- **Value**: `your-api-key-here`
 
 ## 📊 **Test Environment Comparison**
 

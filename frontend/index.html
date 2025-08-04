@@ -192,6 +192,12 @@
                         placeholder="sk-..."
                         class="input-field w-full"
                     />
+                    <div id="api-key-status" class="mt-2">
+                        <div class="flex items-center gap-2 text-sm">
+                            <div class="w-2 h-2 rounded-full bg-red-500"></div>
+                            <span class="text-red-400">No API key stored</span>
+                        </div>
+                    </div>
                 </div>
 
                 <div>
@@ -246,14 +252,56 @@
             developerMessage: 'You are a helpful AI assistant. Provide clear, concise, and accurate responses.'
         };
 
-        // Load settings from localStorage
+        // Load settings from localStorage (except API key)
         const savedSettings = localStorage.getItem('chat-settings');
         if (savedSettings) {
-            settings = { ...settings, ...JSON.parse(savedSettings) };
-            apiKeyInput.value = settings.apiKey;
+            const parsedSettings = JSON.parse(savedSettings);
+            settings.model = parsedSettings.model || settings.model;
+            settings.developerMessage = parsedSettings.developerMessage || settings.developerMessage;
             modelSelect.value = settings.model;
             developerMessageInput.value = settings.developerMessage;
         }
+
+        // Check for stored API key on page load
+        async function checkStoredApiKey() {
+            try {
+                const response = await fetch('https://ai-chat-backend-1mz4ltyia-renard-futes-projects.vercel.app/api/get-key');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.has_key) {
+                        settings.apiKey = 'stored'; // Mark as stored
+                        updateApiKeyStatus(true, data.masked_key);
+                    } else {
+                        updateApiKeyStatus(false);
+                    }
+                }
+            } catch (error) {
+                console.error('Error checking stored API key:', error);
+                updateApiKeyStatus(false);
+            }
+        }
+
+        function updateApiKeyStatus(hasKey, maskedKey = null) {
+            const statusDiv = document.getElementById('api-key-status');
+            if (hasKey) {
+                statusDiv.innerHTML = `
+                    <div class="flex items-center gap-2 text-sm">
+                        <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                        <span class="text-green-400">API Key saved: ${maskedKey}</span>
+                    </div>
+                `;
+            } else {
+                statusDiv.innerHTML = `
+                    <div class="flex items-center gap-2 text-sm">
+                        <div class="w-2 h-2 rounded-full bg-red-500"></div>
+                        <span class="text-red-400">No API key stored</span>
+                    </div>
+                `;
+            }
+        }
+
+        // Check for stored API key when page loads
+        checkStoredApiKey();
 
         function addMessage(content, isUser = false) {
             const messageDiv = document.createElement('div');
@@ -309,8 +357,8 @@
         }
 
         async function sendMessage(message) {
-            if (!settings.apiKey) {
-                alert('Please configure your OpenAI API key in settings.');
+            if (settings.apiKey !== 'stored') {
+                alert('Please save an API key in settings first.');
                 return;
             }
 
@@ -327,7 +375,6 @@
                         developer_message: settings.developerMessage,
                         user_message: message,
                         model: settings.model,
-                        api_key: settings.apiKey,
                     }),
                 });
 
@@ -399,12 +446,45 @@
             settingsModal.classList.remove('hidden');
         });
 
-        saveSettingsBtn.addEventListener('click', () => {
-            settings.apiKey = apiKeyInput.value;
+        saveSettingsBtn.addEventListener('click', async () => {
+            const newApiKey = apiKeyInput.value.trim();
             settings.model = modelSelect.value;
             settings.developerMessage = developerMessageInput.value;
             
-            localStorage.setItem('chat-settings', JSON.stringify(settings));
+            // Save API key to backend if provided
+            if (newApiKey) {
+                try {
+                    const response = await fetch('https://ai-chat-backend-1mz4ltyia-renard-futes-projects.vercel.app/api/save-key', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            api_key: newApiKey,
+                        }),
+                    });
+                    
+                    if (response.ok) {
+                        settings.apiKey = 'stored';
+                        updateApiKeyStatus(true, newApiKey.substring(0, 7) + '...' + newApiKey.substring(newApiKey.length - 4));
+                        alert('API key saved successfully!');
+                    } else {
+                        const errorData = await response.json();
+                        alert('Failed to save API key: ' + (errorData.detail || 'Unknown error'));
+                        return;
+                    }
+                } catch (error) {
+                    alert('Error saving API key: ' + error.message);
+                    return;
+                }
+            }
+            
+            // Save other settings to localStorage
+            localStorage.setItem('chat-settings', JSON.stringify({
+                model: settings.model,
+                developerMessage: settings.developerMessage
+            }));
+            
             settingsModal.classList.add('hidden');
         });
 

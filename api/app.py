@@ -7,6 +7,7 @@ from pydantic import BaseModel
 # Import OpenAI client for interacting with OpenAI's API
 from openai import OpenAI
 import os
+import json
 from typing import Optional
 
 # Initialize FastAPI application with a title
@@ -22,20 +23,51 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers in requests
 )
 
-# Define the data model for chat requests using Pydantic
-# This ensures incoming request data is properly validated
+# Define the data models using Pydantic
 class ChatRequest(BaseModel):
     developer_message: str  # Message from the developer/system
     user_message: str      # Message from the user
     model: Optional[str] = "gpt-4.1-mini"  # Optional model selection with default
-    api_key: str          # OpenAI API key for authentication
+
+class ApiKeyRequest(BaseModel):
+    api_key: str  # OpenAI API key for storage
+
+# File path for storing API key
+API_KEY_FILE = "stored_api_key.txt"
+
+# Helper functions for API key storage
+def save_api_key(api_key: str):
+    """Save API key to file"""
+    try:
+        with open(API_KEY_FILE, 'w') as f:
+            f.write(api_key)
+        return True
+    except Exception as e:
+        print(f"Error saving API key: {e}")
+        return False
+
+def get_stored_api_key() -> Optional[str]:
+    """Retrieve stored API key from file"""
+    try:
+        if os.path.exists(API_KEY_FILE):
+            with open(API_KEY_FILE, 'r') as f:
+                return f.read().strip()
+        return None
+    except Exception as e:
+        print(f"Error reading API key: {e}")
+        return None
 
 # Define the main chat endpoint that handles POST requests
 @app.post("/api/chat")
 async def chat(request: ChatRequest):
     try:
-        # Initialize OpenAI client with the provided API key
-        client = OpenAI(api_key=request.api_key)
+        # Get stored API key
+        stored_api_key = get_stored_api_key()
+        if not stored_api_key:
+            raise HTTPException(status_code=400, detail="No API key stored. Please save an API key first.")
+        
+        # Initialize OpenAI client with the stored API key
+        client = OpenAI(api_key=stored_api_key)
         
         # Create an async generator function for streaming responses
         async def generate():
@@ -57,14 +89,42 @@ async def chat(request: ChatRequest):
         # Return a streaming response to the client
         return StreamingResponse(generate(), media_type="text/plain")
     
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
     except Exception as e:
-        # Handle any errors that occur during processing
+        # Handle any other errors that occur during processing
         raise HTTPException(status_code=500, detail=str(e))
 
 # Define a health check endpoint to verify API status
 @app.get("/api/health")
 async def health_check():
     return {"status": "ok"}
+
+# Endpoint to save API key
+@app.post("/api/save-key")
+async def save_key(request: ApiKeyRequest):
+    try:
+        if save_api_key(request.api_key):
+            return {"status": "success", "message": "API key saved successfully"}
+        else:
+            raise HTTPException(status_code=500, detail="Failed to save API key")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Endpoint to get stored API key status
+@app.get("/api/get-key")
+async def get_key():
+    try:
+        stored_key = get_stored_api_key()
+        if stored_key:
+            # Return masked version for security (first 7 chars + ...)
+            masked_key = stored_key[:7] + "..." + stored_key[-4:] if len(stored_key) > 11 else "***"
+            return {"status": "success", "has_key": True, "masked_key": masked_key}
+        else:
+            return {"status": "success", "has_key": False, "masked_key": None}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 # Entry point for running the application directly
 if __name__ == "__main__":

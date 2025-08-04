@@ -4,6 +4,9 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'AI Chat Interface',
   description: 'Modern chat interface powered by OpenAI',
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
 
 export default function RootLayout({

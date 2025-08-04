@@ -76,22 +76,26 @@ async def chat(request: ChatRequest):
         # Initialize OpenAI client with the stored API key
         client = OpenAI(api_key=stored_api_key)
         
+        # Create a streaming chat completion request
+        stream = client.chat.completions.create(
+            model=request.model,
+            messages=[
+                {"role": "developer", "content": request.developer_message},
+                {"role": "user", "content": request.user_message}
+            ],
+            stream=True  # Enable streaming response
+        )
+        
         # Create an async generator function for streaming responses
         async def generate():
-            # Create a streaming chat completion request
-            stream = client.chat.completions.create(
-                model=request.model,
-                messages=[
-                    {"role": "developer", "content": request.developer_message},
-                    {"role": "user", "content": request.user_message}
-                ],
-                stream=True  # Enable streaming response
-            )
-            
-            # Yield each chunk of the response as it becomes available
-            for chunk in stream:
-                if chunk.choices[0].delta.content is not None:
-                    yield chunk.choices[0].delta.content
+            try:
+                # Yield each chunk of the response as it becomes available
+                for chunk in stream:
+                    if chunk.choices[0].delta.content is not None:
+                        yield chunk.choices[0].delta.content
+            except Exception as e:
+                print(f"Error in streaming: {e}")
+                yield f"Error: {str(e)}"
 
         # Return a streaming response to the client
         return StreamingResponse(generate(), media_type="text/plain")
@@ -101,12 +105,17 @@ async def chat(request: ChatRequest):
         raise
     except Exception as e:
         # Handle any other errors that occur during processing
+        print(f"Chat endpoint error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # Define a health check endpoint to verify API status
 @app.get("/api/health")
 async def health_check():
-    return {"status": "ok"}
+    try:
+        return {"status": "ok", "message": "API is running"}
+    except Exception as e:
+        print(f"Health check error: {e}")
+        return {"status": "error", "message": str(e)}
 
 # Endpoint to save API key
 @app.post("/api/save-key")

@@ -147,7 +147,7 @@
                         Welcome to AI Chat
                     </h3>
                     <p class="text-gray-300">
-                        Configure your API key in settings and start chatting!
+                        Your API key is configured on the server. Start chatting!
                     </p>
                 </div>
             </div>
@@ -183,21 +183,11 @@
             
             <div class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-2">
-                        OpenAI API Key
-                    </label>
-                    <input
-                        type="password"
-                        id="api-key"
-                        placeholder="sk-..."
-                        class="input-field w-full"
-                    />
-                    <div id="api-key-status" class="mt-2">
-                        <div class="flex items-center gap-2 text-sm">
-                            <div class="w-2 h-2 rounded-full bg-red-500"></div>
-                            <span class="text-red-400">No API key stored</span>
-                        </div>
+                    <div class="flex items-center gap-2 text-sm mb-2">
+                        <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                        <span class="text-green-400">API Key configured on server</span>
                     </div>
+                    <p class="text-xs text-gray-400">Your OpenAI API key is securely configured on the backend server.</p>
                 </div>
 
                 <div>
@@ -242,17 +232,15 @@
         const settingsBtn = document.getElementById('settings-btn');
         const settingsModal = document.getElementById('settings-modal');
         const saveSettingsBtn = document.getElementById('save-settings');
-        const apiKeyInput = document.getElementById('api-key');
         const modelSelect = document.getElementById('model');
         const developerMessageInput = document.getElementById('developer-message');
 
         let settings = {
-            apiKey: '',
             model: 'gpt-4.1-mini',
             developerMessage: 'You are a helpful AI assistant. Provide clear, concise, and accurate responses.'
         };
 
-        // Load settings from localStorage (except API key)
+        // Load settings from localStorage
         const savedSettings = localStorage.getItem('chat-settings');
         if (savedSettings) {
             const parsedSettings = JSON.parse(savedSettings);
@@ -261,47 +249,6 @@
             modelSelect.value = settings.model;
             developerMessageInput.value = settings.developerMessage;
         }
-
-        // Check for stored API key on page load
-        async function checkStoredApiKey() {
-            try {
-                const response = await fetch('https://ai-chat-backend-3k7m.onrender.com/api/get-key');
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.has_key) {
-                        settings.apiKey = 'stored'; // Mark as stored
-                        updateApiKeyStatus(true, data.masked_key);
-                    } else {
-                        updateApiKeyStatus(false);
-                    }
-                }
-            } catch (error) {
-                console.error('Error checking stored API key:', error);
-                updateApiKeyStatus(false);
-            }
-        }
-
-        function updateApiKeyStatus(hasKey, maskedKey = null) {
-            const statusDiv = document.getElementById('api-key-status');
-            if (hasKey) {
-                statusDiv.innerHTML = `
-                    <div class="flex items-center gap-2 text-sm">
-                        <div class="w-2 h-2 rounded-full bg-green-500"></div>
-                        <span class="text-green-400">API Key saved: ${maskedKey}</span>
-                    </div>
-                `;
-            } else {
-                statusDiv.innerHTML = `
-                    <div class="flex items-center gap-2 text-sm">
-                        <div class="w-2 h-2 rounded-full bg-red-500"></div>
-                        <span class="text-red-400">No API key stored</span>
-                    </div>
-                `;
-            }
-        }
-
-        // Check for stored API key when page loads
-        checkStoredApiKey();
 
         function addMessage(content, isUser = false) {
             const messageDiv = document.createElement('div');
@@ -357,11 +304,6 @@
         }
 
         async function sendMessage(message) {
-            if (settings.apiKey !== 'stored') {
-                alert('Please save an API key in settings first.');
-                return;
-            }
-
             addMessage(message, true);
             addTypingIndicator();
 
@@ -447,44 +389,16 @@
         });
 
         saveSettingsBtn.addEventListener('click', async () => {
-            const newApiKey = apiKeyInput.value.trim();
             settings.model = modelSelect.value;
             settings.developerMessage = developerMessageInput.value;
             
-            // Save API key to backend if provided
-            if (newApiKey) {
-                try {
-                    const response = await fetch('https://ai-chat-backend-3k7m.onrender.com/api/save-key', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            api_key: newApiKey,
-                        }),
-                    });
-                    
-                    if (response.ok) {
-                        settings.apiKey = 'stored';
-                        updateApiKeyStatus(true, newApiKey.substring(0, 7) + '...' + newApiKey.substring(newApiKey.length - 4));
-                        alert('API key saved successfully!');
-                    } else {
-                        const errorData = await response.json();
-                        alert('Failed to save API key: ' + (errorData.detail || 'Unknown error'));
-                        return;
-                    }
-                } catch (error) {
-                    alert('Error saving API key: ' + error.message);
-                    return;
-                }
-            }
-            
-            // Save other settings to localStorage
+            // Save settings to localStorage
             localStorage.setItem('chat-settings', JSON.stringify({
                 model: settings.model,
                 developerMessage: settings.developerMessage
             }));
             
+            alert('Settings saved successfully!');
             settingsModal.classList.add('hidden');
         });
 

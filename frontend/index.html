@@ -156,7 +156,7 @@
                         Welcome to AI Chat
                     </h3>
                     <p class="text-gray-300">
-                        Configure your settings and start chatting!
+                        Your API key is configured on the server. Configure your settings and start chatting!
                     </p>
                 </div>
             </div>
@@ -265,9 +265,50 @@
             developerMessageInput.value = settings.developerMessage;
         }
 
+        // Check backend API key status on page load
+        async function checkBackendStatus() {
+            try {
+                const response = await fetch('https://ai-chat-backend-q0j572313-renard-futes-projects.vercel.app/api/health');
+                const data = await response.json();
+                
+                // Update the API key status indicator
+                const statusIndicator = document.querySelector('.flex.items-center.gap-2.text-sm');
+                if (statusIndicator) {
+                    const dot = statusIndicator.querySelector('.w-2.h-2.rounded-full');
+                    const text = statusIndicator.querySelector('.text-green-400');
+                    
+                    if (data.api_key_status === 'configured') {
+                        dot.className = 'w-2 h-2 rounded-full bg-green-500';
+                        text.className = 'text-green-400';
+                        text.textContent = 'API Key configured on server';
+                    } else {
+                        dot.className = 'w-2 h-2 rounded-full bg-red-500';
+                        text.className = 'text-red-400';
+                        text.textContent = 'API Key not configured';
+                    }
+                }
+            } catch (error) {
+                console.error('Error checking backend status:', error);
+                // Update status to show error
+                const statusIndicator = document.querySelector('.flex.items-center.gap-2.text-sm');
+                if (statusIndicator) {
+                    const dot = statusIndicator.querySelector('.w-2.h-2.rounded-full');
+                    const text = statusIndicator.querySelector('.text-green-400');
+                    dot.className = 'w-2 h-2 rounded-full bg-red-500';
+                    text.className = 'text-red-400';
+                    text.textContent = 'Backend connection error';
+                }
+            }
+        }
+
+        // Check backend status when page loads
+        checkBackendStatus();
+
         // Settings modal functionality
         settingsBtn.addEventListener('click', () => {
             settingsModal.classList.remove('hidden');
+            // Re-check backend status when opening settings
+            checkBackendStatus();
         });
 
         closeSettings.addEventListener('click', () => {

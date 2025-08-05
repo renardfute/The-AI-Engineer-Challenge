@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Chat Interface - CLEAN SLATE DEPLOYMENT</title>
+    <title>AI Chat Interface</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -89,6 +89,7 @@
         .typing-dot:nth-child(3) {
             animation-delay: 0.4s;
         }
+
         /* Force proper text colors for chat messages */
         .ai-message, .ai-message div, .ai-message * {
             color: #f3f4f6 !important; /* Light gray */
@@ -107,6 +108,7 @@
         .text-gray-900, .text-gray-800, .text-black {
             color: #f3f4f6 !important;
         }
+
         /* Force button text colors */
         .btn-primary, .btn-primary * {
             color: #ffffff !important; /* White text */
@@ -120,6 +122,15 @@
         button, button * {
             color: inherit !important;
         }
+
+        /* Modal styles */
+        .modal {
+            @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50;
+        }
+
+        .modal-content {
+            @apply bg-background-secondary rounded-2xl p-6 max-w-md w-full mx-4 border border-gray-600;
+        }
     </style>
 </head>
 <body class="antialiased">
@@ -127,44 +138,13 @@
         <!-- Header -->
         <div class="flex items-center justify-between p-4 border-b border-gray-700">
             <div>
-                                    <h1 class="text-2xl font-bold text-white">AI Chat Interface - CLEAN SLATE</h1>
+                <h1 class="text-2xl font-bold text-white">AI Chat Interface</h1>
                 <p class="text-gray-300 text-sm">Powered by OpenAI</p>
             </div>
             
-            <div class="flex items-center gap-2">
-                <div class="flex items-center gap-2 text-sm">
-                    <div class="w-2 h-2 rounded-full bg-green-500"></div>
-                    <span class="text-green-400">API Key configured</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Configuration Panel -->
-        <div class="p-4 border-b border-gray-700 bg-background-secondary">
-            <div class="flex gap-4 items-end">
-                <div class="flex-1">
-                    <label class="block text-sm font-medium text-gray-300 mb-2">
-                        Model
-                    </label>
-                    <select id="model" class="input-field w-full">
-                        <option value="gpt-4.1-mini">GPT-4.1 Mini</option>
-                        <option value="gpt-4">GPT-4</option>
-                        <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-                    </select>
-                </div>
-                
-                <div class="flex-1">
-                    <label class="block text-sm font-medium text-gray-300 mb-2">
-                        System Message
-                    </label>
-                    <textarea
-                        id="developer-message"
-                        placeholder="Enter the system message for the AI..."
-                        class="input-field w-full resize-none"
-                        rows="2"
-                    >You are a helpful AI assistant. Provide clear, concise, and accurate responses.</textarea>
-                </div>
-            </div>
+            <button id="settings-btn" class="btn-secondary">
+                ⚙️ Settings
+            </button>
         </div>
 
         <!-- Messages Container -->
@@ -176,7 +156,7 @@
                         Welcome to AI Chat
                     </h3>
                     <p class="text-gray-300">
-                        Your API key is configured on the server. Start chatting!
+                        Configure your settings and start chatting!
                     </p>
                 </div>
             </div>
@@ -205,7 +185,56 @@
         </div>
     </div>
 
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-semibold text-white">Settings</h3>
+                <button id="close-settings" class="text-gray-400 hover:text-white">
+                    ✕
+                </button>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">
+                        Model
+                    </label>
+                    <select id="model" class="input-field w-full">
+                        <option value="gpt-4.1-mini">GPT-4.1 Mini</option>
+                        <option value="gpt-4">GPT-4</option>
+                        <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">
+                        System Message
+                    </label>
+                    <textarea
+                        id="developer-message"
+                        placeholder="Enter the system message for the AI..."
+                        class="input-field w-full resize-none"
+                        rows="3"
+                    >You are a helpful AI assistant. Provide clear, concise, and accurate responses.</textarea>
+                </div>
 
+                <div class="flex items-center gap-2 text-sm">
+                    <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                    <span class="text-green-400">API Key configured on server</span>
+                </div>
+            </div>
+            
+            <div class="flex gap-3 mt-6">
+                <button id="save-settings" class="btn-primary flex-1">
+                    Save Settings
+                </button>
+                <button id="close-settings-2" class="btn-secondary">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
 
     <script>
         // Simple chat functionality
@@ -213,6 +242,11 @@
         const messageInput = document.getElementById('message-input');
         const sendBtn = document.getElementById('send-btn');
         const chatForm = document.getElementById('chat-form');
+        const settingsBtn = document.getElementById('settings-btn');
+        const settingsModal = document.getElementById('settings-modal');
+        const closeSettings = document.getElementById('close-settings');
+        const closeSettings2 = document.getElementById('close-settings-2');
+        const saveSettings = document.getElementById('save-settings');
         const modelSelect = document.getElementById('model');
         const developerMessageInput = document.getElementById('developer-message');
 
@@ -231,15 +265,31 @@
             developerMessageInput.value = settings.developerMessage;
         }
 
-        // Auto-save settings when changed
-        modelSelect.addEventListener('change', () => {
-            settings.model = modelSelect.value;
-            localStorage.setItem('chat-settings', JSON.stringify(settings));
+        // Settings modal functionality
+        settingsBtn.addEventListener('click', () => {
+            settingsModal.classList.remove('hidden');
         });
 
-        developerMessageInput.addEventListener('input', () => {
+        closeSettings.addEventListener('click', () => {
+            settingsModal.classList.add('hidden');
+        });
+
+        closeSettings2.addEventListener('click', () => {
+            settingsModal.classList.add('hidden');
+        });
+
+        saveSettings.addEventListener('click', () => {
+            settings.model = modelSelect.value;
             settings.developerMessage = developerMessageInput.value;
             localStorage.setItem('chat-settings', JSON.stringify(settings));
+            settingsModal.classList.add('hidden');
+        });
+
+        // Close modal when clicking outside
+        settingsModal.addEventListener('click', (e) => {
+            if (e.target === settingsModal) {
+                settingsModal.classList.add('hidden');
+            }
         });
 
         function addMessage(content, isUser = false) {
@@ -362,7 +412,7 @@
             } catch (error) {
                 removeTypingIndicator();
                 console.error('Error:', error);
-                addMessage('Sorry, there was an error processing your request. Please check your API key and try again.', false);
+                addMessage('Sorry, there was an error processing your request. Please try again.', false);
             }
         }
 
@@ -375,8 +425,6 @@
                 messageInput.value = '';
             }
         });
-
-
 
         // Auto-resize textarea
         messageInput.addEventListener('input', () => {

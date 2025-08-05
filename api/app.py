@@ -109,6 +109,38 @@ async def health_check():
         print(f"Health check error: {e}")
         return {"status": "error", "message": str(e)}
 
+# Debug endpoint for troubleshooting
+@app.post("/api/debug")
+async def debug_endpoint(request: ChatRequest):
+    try:
+        # Test 1: Check if we can parse the request
+        debug_info = {
+            "request_received": True,
+            "developer_message": request.developer_message[:50] + "..." if len(request.developer_message) > 50 else request.developer_message,
+            "user_message": request.user_message,
+            "model": request.model
+        }
+        
+        # Test 2: Check environment variable
+        try:
+            api_key = os.getenv("OPENAI_API_KEY")
+            debug_info["api_key_exists"] = api_key is not None
+            debug_info["api_key_length"] = len(api_key) if api_key else 0
+        except Exception as e:
+            debug_info["api_key_error"] = str(e)
+            
+        # Test 3: Check OpenAI client creation
+        try:
+            client = OpenAI(api_key=api_key)
+            debug_info["openai_client_created"] = True
+        except Exception as e:
+            debug_info["openai_client_error"] = str(e)
+            
+        return debug_info
+        
+    except Exception as e:
+        return {"error": str(e), "type": str(type(e))}
+
 # CORS preflight endpoint
 @app.options("/api/{path:path}")
 async def options_handler(path: str):
